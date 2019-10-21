@@ -1,0 +1,14 @@
+{
+  "name": "domhandler-plugin",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "parcel src/index.html --global esr",
+    "prod": "parcel build src/index.js --no-source-maps --global esr"
+  },
+  "keywords": [],
+  "author": "Eser Çetiner",
+  "license": "ISC",
+  "dependencies": {}
+}
