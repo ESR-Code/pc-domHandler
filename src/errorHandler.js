@@ -6,5 +6,4 @@ export const errorHandler = arr => {
 
 export const assetChecker = asset => {
     if (!asset) throw 'Domhandler Error :File not found';
-
 };
