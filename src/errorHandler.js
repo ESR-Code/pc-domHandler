@@ -1,6 +1,6 @@
 
 export const errorHandler = arr => {
-    if (!arr) throw 'Domhandler Error : At least one file must be specified';
+    if (!arr || arr.length < 1) throw 'Domhandler Error : At least one file must be specified';
     if (!pc) throw 'There is no playcanvas Instance';
 };
 
