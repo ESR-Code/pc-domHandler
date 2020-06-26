@@ -1,34 +1,30 @@
 import { errorHandler, assetChecker } from './errorHandler';
 
-let styleContainer, htmlContainer, gAssets = [];
 
-function DomHandler(...files) {
+const DomHandler = function (...files) {
     this.loaded = false;
     this.autoUpdate = true;
     this.files = files;
+    this.gAssets = [];
+    this.domElements = [];
     errorHandler(this.files); // Checking initial errors...
+
+    var fileSplitter = fName => {
+        const file = fName.split('.'),
+            fileName = file[0],
+            fileType = file[1],
+            asset = pc.app.assets.find(fileName, fileType);
+        assetChecker(asset); // Checking asset errors...
+        this.gAssets.push(asset)
+
+        return true
+    }
 
     this.files.forEach(e => fileSplitter(e)) // Initial asset actions
     this._addUpdateEventToElements();
 }
 
 
-var fileSplitter = fName => {
-    const file = fName.split('.'),
-        fileName = file[0],
-        fileType = file[1],
-        asset = pc.app.assets.find(fileName, fileType);
-    assetChecker(asset); // Checking asset errors...
-    gAssets.push(asset)
-
-    return true
-}
-
-var createDomElements = function (fn) {
-    styleContainer = document.createElement('style');
-    htmlContainer = document.createElement('div');
-    if (typeof fn == 'function') fn(); // For callback
-}
 
 DomHandler.prototype = {
 
@@ -38,29 +34,30 @@ DomHandler.prototype = {
 
         if (this.loaded) throw new Error(`${this.files} already loaded`);
 
-        createDomElements(() => {
-            gAssets.forEach(el => {
-                if (el.type == 'css') {
-                    styleContainer.innerHTML += el.resource;
-                } else if (el.type == 'html') {
-                    htmlContainer.innerHTML += el.resource;
-                }
-            })
+        this.gAssets.forEach(el => {
+            let container;
+            if (el.type == 'css') {
+                container = document.createElement('style');
+                container.innerHTML += el.resource;
+                document.head.appendChild(container);
 
-            document.head.appendChild(styleContainer);
-            document.body.appendChild(htmlContainer);
-            this._toggleLoaded();
-        });
+            } else if (el.type == 'html') {
+                container = document.createElement('div');
+                container.innerHTML += el.resource;
+                document.body.appendChild(container);
 
+            }
+            this.domElements.push({ domElement: container, name: el.name })
+        })
+
+        this._toggleLoaded();
         if (typeof fn == 'function') fn(); // For callback
     },
     removeDom: function (fn) {
+
         if (!this.loaded) throw new Error(`${this.files} not loaded yet`);
-
-        styleContainer.remove();
-        htmlContainer.remove();
+        this.domElements.forEach(e => e.domElement.remove())
         this._toggleLoaded();
-
         if (typeof fn == 'function') fn(); // For callback
 
     },
@@ -68,7 +65,7 @@ DomHandler.prototype = {
         this.autoUpdate = !this.autoUpdate;
         var self = this;
         if (this.autoUpdate) {
-            gAssets.forEach(function (e) {
+            this.gAssets.forEach(function (e) {
                 e.on('change', function () {
                     if (!self.loaded) return;
                     self.removeDom(() => {
@@ -78,24 +75,21 @@ DomHandler.prototype = {
                 })
             })
         } else {
-            gAssets.forEach(e => {
+            this.gAssets.forEach(e => {
                 e.off('change');
             })
         }
     },
     _addUpdateEventToElements: function () {
         var self = this;
-        gAssets.forEach(e => {
-
+        this.gAssets.forEach(e => {
             e.on('change', function () {
                 if (!self.loaded) return;
                 self.removeDom(() => {
                     self.loadDom();
                 });
-
             })
         })
-
     }
 
 }
